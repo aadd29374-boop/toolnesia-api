@@ -1,50 +1,47 @@
 export default async function handler(req, res) {
-  const { url } = req.query;
-
+  const url = req.query.url;
   if (!url) {
     return res.status(400).json({
       status: "error",
-      message: "Missing url parameter",
+      message: "URL parameter missing"
     });
   }
 
   try {
-    const apiUrl =
-      "https://www.tikwm.com/api/?url=" +
-      encodeURIComponent(url) +
-      "&hd=1";
+    const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
 
     const response = await fetch(apiUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 ToolNesia API" },
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+      }
     });
 
     const data = await response.json();
+
     if (!data || data.code !== 0 || !data.data) {
       return res.status(500).json({
         status: "error",
-        message: "Failed to fetch data from TikTok",
+        message: "Failed to fetch data from TikTok"
       });
     }
 
-    const d = data.data;
+    const video = data.data;
 
     return res.status(200).json({
       status: "success",
-      platform: "tiktok",
-      title: d.title,
-      author: d.author,
-      thumbnail: d.cover,
-      download: {
-        hd: d.hdplay || d.play,
-        sd: d.play,
-        audio: d.music,
-      },
-      duration: d.duration,
+      title: video.title,
+      author: video.author,
+      thumb: video.cover,
+      video_no_watermark: video.play,
+      video_watermark: video.wmplay,
+      music_url: video.music
     });
-  } catch (err) {
+
+  } catch (e) {
     return res.status(500).json({
       status: "error",
-      message: "Internal server error",
+      message: e.message
     });
   }
 }
